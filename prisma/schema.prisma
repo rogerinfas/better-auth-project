@@ -14,14 +14,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============================================
+// MODELO DE USUARIO
+// ============================================
+// Este modelo maneja la información del usuario
+// Incluye campos para autenticación básica y OAuth
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  tasks     Task[]
+  id            String    @id @default(uuid())
+  email         String    @unique
+  emailVerified DateTime? // Fecha de verificación del email (null si no está verificado)
+  password      String?   // Contraseña hasheada (null si usa OAuth)
+  name          String?   // Nombre del usuario (opcional)
+  image         String?   // URL de la imagen de perfil (opcional)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relaciones
+  tasks         Task[]
+  sessions      Session[]
+  accounts      Account[]
 }
 
+// ============================================
+// MODELO DE TAREA
+// ============================================
+// Tareas asociadas a usuarios
 model Task {
   id          String   @id @default(uuid())
   title       String
@@ -31,4 +48,69 @@ model Task {
   updatedAt   DateTime @updatedAt
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// MODELO DE SESIÓN
+// ============================================
+// Maneja las sesiones activas de los usuarios
+// Cada vez que un usuario inicia sesión, se crea una sesión
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique // Token único de la sesión
+  userId       String
+  expires      DateTime // Fecha de expiración de la sesión
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Relación con User
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+// ============================================
+// MODELO DE CUENTA (OAuth)
+// ============================================
+// Almacena información de proveedores OAuth (Google, GitHub, etc.)
+// Un usuario puede tener múltiples cuentas vinculadas
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String  // Tipo de cuenta (oauth, credentials, etc.)
+  provider          String  // Proveedor (google, github, credentials, etc.)
+  providerAccountId String  // ID del usuario en el proveedor
+  refresh_token     String? @db.Text // Token de refresco (OAuth)
+  access_token      String? @db.Text // Token de acceso (OAuth)
+  expires_at        Int?    // Timestamp de expiración del access_token
+  token_type        String? // Tipo de token (Bearer, etc.)
+  scope             String? // Alcances otorgados
+  id_token          String? @db.Text // ID Token (OpenID Connect)
+  session_state     String? // Estado de sesión
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relación con User
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Un usuario no puede tener dos cuentas del mismo proveedor
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+// ============================================
+// MODELO DE TOKEN DE VERIFICACIÓN
+// ============================================
+// Tokens para verificar email, resetear contraseña, etc.
+model VerificationToken {
+  id         String   @id @default(uuid())
+  identifier String   // Email o identificador del usuario
+  token      String   @unique // Token único
+  expires    DateTime // Fecha de expiración
+  type       String   // Tipo: email_verification, password_reset, etc.
+  createdAt  DateTime @default(now())
+  
+  // Un identificador + tipo solo puede tener un token activo
+  @@unique([identifier, type])
+  @@index([token])
 }

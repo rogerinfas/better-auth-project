@@ -27,7 +27,45 @@ pnpm run start:dev
 
 ## 🧪 Prueba Rápida
 
-### 1. Crear un usuario
+### 🔐 Autenticación
+
+#### 1. Registrar un usuario
+```bash
+curl -X POST http://localhost:3000/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"123456","name":"Test User"}'
+```
+
+#### 2. Iniciar sesión
+```bash
+curl -X POST http://localhost:3000/auth/signin \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"123456"}'
+```
+
+**Respuesta (guarda el sessionToken):**
+```json
+{
+  "success": true,
+  "user": { ... },
+  "session": {
+    "sessionToken": "aBcDeFgH...",
+    "expires": "2025-11-28T..."
+  }
+}
+```
+
+#### 3. Usar el token en requests protegidos
+```bash
+curl http://localhost:3000/auth/me \
+  -H "Authorization: Bearer TU_SESSION_TOKEN"
+```
+
+---
+
+### 📋 CRUD de Usuarios y Tareas
+
+### 1. Crear un usuario (método alternativo)
 ```bash
 curl -X POST http://localhost:3000/users \
   -H "Content-Type: application/json" \

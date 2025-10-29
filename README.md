@@ -23,15 +23,20 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository con Prisma ORM y PostgreSQL.
+[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository con Prisma ORM, PostgreSQL y sistema completo de autenticación.
 
 > 🚀 **¿Primera vez aquí?** Lee la [Guía de Inicio Rápido](./docs/QUICK-START.md) para comenzar en 5 minutos.
+
+> 📋 **Resumen completo:** [RESUMEN-IMPLEMENTACION.md](./RESUMEN-IMPLEMENTACION.md) - Todo lo implementado
+
+> 🔐 **Autenticación:** [docs/AUTHENTICATION.md](./docs/AUTHENTICATION.md) - Guía completa y detallada
 
 ## 🗄️ Stack Tecnológico
 
 - **Framework:** NestJS
 - **ORM:** Prisma
 - **Base de datos:** PostgreSQL (Docker)
+- **Autenticación:** Sistema personalizado con bcrypt y sesiones
 - **Package Manager:** pnpm
 
 ## 🚀 Inicio Rápido
@@ -62,17 +67,36 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5435/better_auth_db?schem
 
 ## 📦 Entidades y API
 
+### 🔐 Autenticación
+
+El proyecto incluye un sistema completo de autenticación:
+
+- **Registro de usuarios** con email/password
+- **Login** con sesiones persistentes
+- **Protección de rutas** con Guards
+- **Sesiones** que expiran en 30 días
+- **Hashing seguro** de contraseñas con bcrypt
+
+Endpoints de autenticación:
+- `POST /auth/signup` - Registrar usuario
+- `POST /auth/signin` - Iniciar sesión
+- `GET /auth/me` - Usuario actual
+- `POST /auth/signout` - Cerrar sesión
+
+### 📊 Entidades de Negocio
+
 El proyecto incluye dos entidades con CRUD completo:
 
-- **User:** id, email, password, createdAt, tasks[]
+- **User:** id, email, password, name, emailVerified, createdAt, tasks[]
   - Endpoints: `/users` (GET, POST, PATCH, DELETE)
   
 - **Task:** id, title, description, completed, createdAt, updatedAt, userId
   - Endpoints: `/tasks` (GET, POST, PATCH, DELETE)
 
 Ver más detalles:
-- [PRISMA-SETUP.md](./PRISMA-SETUP.md) - Configuración de Prisma
-- [API-ENDPOINTS.md](./API-ENDPOINTS.md) - Documentación completa de la API
+- [AUTHENTICATION.md](./docs/AUTHENTICATION.md) - **📖 Guía completa de autenticación**
+- [PRISMA-SETUP.md](./docs/PRISMA-SETUP.md) - Configuración de Prisma
+- [API-ENDPOINTS.md](./docs/API-ENDPOINTS.md) - Documentación completa de la API
 
 ## 💻 Ejecutar el proyecto
 
@@ -136,11 +160,12 @@ $ pnpm run test:cov
 
 Este proyecto incluye documentación completa:
 
-- **[QUICK-START.md](./QUICK-START.md)** - Comienza en 5 minutos
-- **[API-ENDPOINTS.md](./API-ENDPOINTS.md)** - Todos los endpoints con ejemplos
-- **[PRISMA-SETUP.md](./PRISMA-SETUP.md)** - Guía de Prisma
-- **[DOCKER-SETUP.md](./DOCKER-SETUP.md)** - Guía de Docker
-- **[PROJECT-STRUCTURE.md](./PROJECT-STRUCTURE.md)** - Arquitectura del proyecto
+- **[QUICK-START.md](./docs/QUICK-START.md)** - Comienza en 5 minutos
+- **[AUTHENTICATION.md](./docs/AUTHENTICATION.md)** - 🔐 Guía completa de autenticación
+- **[API-ENDPOINTS.md](./docs/API-ENDPOINTS.md)** - Todos los endpoints con ejemplos
+- **[PRISMA-SETUP.md](./docs/PRISMA-SETUP.md)** - Guía de Prisma
+- **[DOCKER-SETUP.md](./docs/DOCKER-SETUP.md)** - Guía de Docker
+- **[PROJECT-STRUCTURE.md](./docs/PROJECT-STRUCTURE.md)** - Arquitectura del proyecto
 - **[api-test.http](./api-test.http)** - Tests de API (REST Client)
 
 ## Deployment
