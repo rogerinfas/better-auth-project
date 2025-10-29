@@ -6,44 +6,46 @@ import {
   Patch,
   Param,
   Delete,
-  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
+/**
+ * Controlador de Usuarios - PROTEGIDO
+ * Todas las rutas requieren autenticación
+ * Los usuarios solo pueden ver y modificar su propia información
+ */
 @Controller('users')
+@UseGuards(AuthGuard) // Protege todas las rutas
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  /**
+   * Obtener perfil del usuario autenticado
+   */
+  @Get('me')
+  getProfile(@CurrentUser() user: any) {
+    return this.usersService.findOne(user.id);
   }
 
-  @Get()
-  findAll() {
-    return this.usersService.findAll();
+  /**
+   * Actualizar perfil del usuario autenticado
+   */
+  @Patch('me')
+  updateProfile(@Body() updateUserDto: UpdateUserDto, @CurrentUser() user: any) {
+    return this.usersService.update(user.id, updateUserDto);
   }
 
-  @Get('by-email')
-  findByEmail(@Query('email') email: string) {
-    return this.usersService.findByEmail(email);
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
+  /**
+   * Eliminar cuenta del usuario autenticado
+   */
+  @Delete('me')
+  deleteAccount(@CurrentUser() user: any) {
+    return this.usersService.remove(user.id);
   }
 }
 
