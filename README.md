@@ -23,15 +23,58 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository con Prisma ORM y PostgreSQL.
 
-## Project setup
+> 🚀 **¿Primera vez aquí?** Lee la [Guía de Inicio Rápido](./QUICK-START.md) para comenzar en 5 minutos.
+
+## 🗄️ Stack Tecnológico
+
+- **Framework:** NestJS
+- **ORM:** Prisma
+- **Base de datos:** PostgreSQL (Docker)
+- **Package Manager:** pnpm
+
+## 🚀 Inicio Rápido
+
+### 1. Instalación
 
 ```bash
 $ pnpm install
 ```
 
-## Compile and run the project
+### 2. Configurar Base de Datos
+
+```bash
+# Iniciar PostgreSQL con Docker (puerto 5435)
+$ pnpm run docker:up
+
+# Aplicar el esquema de Prisma
+$ pnpm run prisma:push
+```
+
+### 3. Variables de Entorno
+
+El archivo `.env` ya está configurado:
+
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5435/better_auth_db?schema=public"
+```
+
+## 📦 Entidades y API
+
+El proyecto incluye dos entidades con CRUD completo:
+
+- **User:** id, email, password, createdAt, tasks[]
+  - Endpoints: `/users` (GET, POST, PATCH, DELETE)
+  
+- **Task:** id, title, description, completed, createdAt, updatedAt, userId
+  - Endpoints: `/tasks` (GET, POST, PATCH, DELETE)
+
+Ver más detalles:
+- [PRISMA-SETUP.md](./PRISMA-SETUP.md) - Configuración de Prisma
+- [API-ENDPOINTS.md](./API-ENDPOINTS.md) - Documentación completa de la API
+
+## 💻 Ejecutar el proyecto
 
 ```bash
 # development
@@ -42,6 +85,38 @@ $ pnpm run start:dev
 
 # production mode
 $ pnpm run start:prod
+```
+
+## 🐳 Comandos Docker
+
+```bash
+# Iniciar base de datos
+$ pnpm run docker:up
+
+# Detener base de datos
+$ pnpm run docker:down
+
+# Ver logs
+$ pnpm run docker:logs
+
+# Reiniciar contenedor
+$ pnpm run docker:restart
+```
+
+## 🗃️ Comandos Prisma
+
+```bash
+# Generar cliente Prisma
+$ pnpm run prisma:generate
+
+# Aplicar esquema (sin migraciones)
+$ pnpm run prisma:push
+
+# Crear y aplicar migración
+$ pnpm run prisma:migrate
+
+# Abrir Prisma Studio
+$ pnpm run prisma:studio
 ```
 
 ## Run tests
@@ -56,6 +131,17 @@ $ pnpm run test:e2e
 # test coverage
 $ pnpm run test:cov
 ```
+
+## 📚 Documentación
+
+Este proyecto incluye documentación completa:
+
+- **[QUICK-START.md](./QUICK-START.md)** - Comienza en 5 minutos
+- **[API-ENDPOINTS.md](./API-ENDPOINTS.md)** - Todos los endpoints con ejemplos
+- **[PRISMA-SETUP.md](./PRISMA-SETUP.md)** - Guía de Prisma
+- **[DOCKER-SETUP.md](./DOCKER-SETUP.md)** - Guía de Docker
+- **[PROJECT-STRUCTURE.md](./PROJECT-STRUCTURE.md)** - Arquitectura del proyecto
+- **[api-test.http](./api-test.http)** - Tests de API (REST Client)
 
 ## Deployment
 

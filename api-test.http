@@ -1,0 +1,120 @@
+### Variables
+@baseUrl = http://localhost:3000
+@userId = {{createUser.response.body.id}}
+@taskId = {{createTask.response.body.id}}
+
+###############################################
+### USERS - Usuarios
+###############################################
+
+### 1. Crear un usuario
+# @name createUser
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "email": "juan@example.com",
+  "password": "password123"
+}
+
+### 2. Obtener todos los usuarios
+GET {{baseUrl}}/users
+
+### 3. Obtener usuario por ID (reemplaza el UUID)
+GET {{baseUrl}}/users/550e8400-e29b-41d4-a716-446655440000
+
+### 4. Obtener usuario por email
+GET {{baseUrl}}/users/by-email?email=juan@example.com
+
+### 5. Actualizar usuario
+PATCH {{baseUrl}}/users/{{userId}}
+Content-Type: application/json
+
+{
+  "email": "juan.nuevo@example.com",
+  "password": "newPassword456"
+}
+
+### 6. Eliminar usuario
+DELETE {{baseUrl}}/users/{{userId}}
+
+###############################################
+### TASKS - Tareas
+###############################################
+
+### 1. Crear una tarea
+# @name createTask
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+
+{
+  "title": "Comprar pan",
+  "description": "En la panadería de la esquina",
+  "userId": "{{userId}}"
+}
+
+### 2. Obtener todas las tareas
+GET {{baseUrl}}/tasks
+
+### 3. Obtener tareas por usuario
+GET {{baseUrl}}/tasks?userId={{userId}}
+
+### 4. Obtener tarea por ID
+GET {{baseUrl}}/tasks/{{taskId}}
+
+### 5. Actualizar tarea
+PATCH {{baseUrl}}/tasks/{{taskId}}
+Content-Type: application/json
+
+{
+  "title": "Comprar pan integral",
+  "description": "En la panadería nueva",
+  "completed": true
+}
+
+### 6. Alternar estado completado
+PATCH {{baseUrl}}/tasks/{{taskId}}/toggle
+
+### 7. Eliminar tarea
+DELETE {{baseUrl}}/tasks/{{taskId}}
+
+###############################################
+### FLUJO COMPLETO - Ejemplo
+###############################################
+
+### Paso 1: Crear usuario
+# @name user1
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "email": "maria@example.com",
+  "password": "maria123"
+}
+
+### Paso 2: Crear primera tarea para el usuario
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+
+{
+  "title": "Estudiar NestJS",
+  "description": "Completar el tutorial oficial",
+  "userId": "{{user1.response.body.id}}"
+}
+
+### Paso 3: Crear segunda tarea
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+
+{
+  "title": "Aprender Prisma",
+  "description": "Hacer ejercicios prácticos",
+  "userId": "{{user1.response.body.id}}"
+}
+
+### Paso 4: Ver todas las tareas del usuario
+GET {{baseUrl}}/tasks?userId={{user1.response.body.id}}
+
+### Paso 5: Ver el usuario con todas sus tareas
+GET {{baseUrl}}/users/{{user1.response.body.id}}
+

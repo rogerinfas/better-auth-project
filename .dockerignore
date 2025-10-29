@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+dist
+coverage
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+README.md
+PRISMA-SETUP.md
+DOCKER-SETUP.md
+.vscode
+.idea
+*.md
+docker-compose.yml
+
