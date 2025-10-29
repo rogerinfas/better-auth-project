@@ -1,0 +1,94 @@
+### Variables
+@baseUrl = http://localhost:3000
+@sessionToken = {{signin.response.body.session.sessionToken}}
+
+###############################################
+### AUTENTICACIÓN
+###############################################
+
+### 1. Registrar usuario
+# @name signup
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "123456",
+  "name": "Test User"
+}
+
+### 2. Iniciar sesión
+# @name signin
+POST {{baseUrl}}/auth/signin
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "123456"
+}
+
+### 3. Obtener usuario actual
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{sessionToken}}
+
+### 4. Cerrar sesión
+POST {{baseUrl}}/auth/signout
+Authorization: Bearer {{sessionToken}}
+
+###############################################
+### PERFIL (PROTEGIDO)
+###############################################
+
+### Ver mi perfil
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{sessionToken}}
+
+### Actualizar mi perfil
+PATCH {{baseUrl}}/users/me
+Authorization: Bearer {{sessionToken}}
+Content-Type: application/json
+
+{
+  "name": "Nuevo Nombre"
+}
+
+###############################################
+### TAREAS (PROTEGIDAS)
+###############################################
+
+### Crear tarea
+# @name createTask
+POST {{baseUrl}}/tasks
+Authorization: Bearer {{sessionToken}}
+Content-Type: application/json
+
+{
+  "title": "Mi tarea",
+  "description": "Descripción de la tarea"
+}
+
+### Ver mis tareas
+GET {{baseUrl}}/tasks
+Authorization: Bearer {{sessionToken}}
+
+### Ver tarea específica
+GET {{baseUrl}}/tasks/{{createTask.response.body.id}}
+Authorization: Bearer {{sessionToken}}
+
+### Actualizar tarea
+PATCH {{baseUrl}}/tasks/{{createTask.response.body.id}}
+Authorization: Bearer {{sessionToken}}
+Content-Type: application/json
+
+{
+  "completed": true
+}
+
+### Alternar completado
+PATCH {{baseUrl}}/tasks/{{createTask.response.body.id}}/toggle
+Authorization: Bearer {{sessionToken}}
+
+### Eliminar tarea
+DELETE {{baseUrl}}/tasks/{{createTask.response.body.id}}
+Authorization: Bearer {{sessionToken}}
+
