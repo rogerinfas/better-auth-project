@@ -140,7 +140,7 @@ const tasks = await fetch('http://localhost:3000/tasks', {
 
 - **[docs/QUICK-START.md](./docs/QUICK-START.md)** - Inicio rápido en 3 pasos
 - **[docs/AUTHENTICATION.md](./docs/AUTHENTICATION.md)** - Guía completa de autenticación
-- **[docs/IMPLEMENTACION-FINAL.md](./docs/IMPLEMENTACION-FINAL.md)** - Resumen de la implementación
+- **[docs/IMPLEMENTACION-FINAL.md](./docs/IMPLEMENTACION-FINAL.md)** - 📊 Diagramas y arquitectura
 - **[test-auth.http](./test-auth.http)** - Tests con REST Client
 
 ## 🔧 Scripts Disponibles

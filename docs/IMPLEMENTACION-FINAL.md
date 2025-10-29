@@ -6,25 +6,252 @@ Sistema completo de autenticación con **todas las rutas protegidas** implementa
 
 ---
 
-## 🔐 Sistema de Autenticación
+## 📊 Diagramas de Secuencia
 
-### Características Implementadas
+### 1️⃣ Flujo de Registro (Sign Up)
 
-✅ **Registro y Login**
-- Hash de contraseñas con bcrypt (10 rondas)
-- Sesiones persistentes en base de datos
-- Tokens únicos de 64 caracteres
-- Expiración automática (30 días)
+```
+┌─────────┐           ┌──────────────┐           ┌─────────────┐           ┌──────────┐
+│ Cliente │           │ AuthController│           │ AuthService │           │ Database │
+└────┬────┘           └───────┬──────┘           └──────┬──────┘           └────┬─────┘
+     │                        │                          │                       │
+     │ POST /auth/signup      │                          │                       │
+     │ {email, password}      │                          │                       │
+     ├───────────────────────>│                          │                       │
+     │                        │                          │                       │
+     │                        │ signUp(email, password)  │                       │
+     │                        ├─────────────────────────>│                       │
+     │                        │                          │                       │
+     │                        │                          │ Verificar email único │
+     │                        │                          ├──────────────────────>│
+     │                        │                          │                       │
+     │                        │                          │<──────────────────────┤
+     │                        │                          │ email disponible      │
+     │                        │                          │                       │
+     │                        │                          │ Hashear password      │
+     │                        │                          │ (bcrypt 10 rondas)    │
+     │                        │                          │                       │
+     │                        │                          │ Crear usuario         │
+     │                        │                          ├──────────────────────>│
+     │                        │                          │                       │
+     │                        │                          │<──────────────────────┤
+     │                        │                          │ Usuario creado        │
+     │                        │                          │                       │
+     │                        │<─────────────────────────┤                       │
+     │                        │ Usuario (sin password)   │                       │
+     │                        │                          │                       │
+     │<───────────────────────┤                          │                       │
+     │ 201 Created            │                          │                       │
+     │ {user: {id, email}}    │                          │                       │
+     │                        │                          │                       │
+```
 
-✅ **Protección de Rutas**
-- AuthGuard aplicado a TODOS los endpoints
-- Solo endpoints de auth son públicos
-- Usuarios solo acceden a sus propios datos
+### 2️⃣ Flujo de Inicio de Sesión (Sign In)
 
-✅ **Seguridad**
-- Contraseñas nunca en texto plano
-- Validación de sesión en cada request
-- Verificación de permisos por usuario
+```
+┌─────────┐           ┌──────────────┐           ┌─────────────┐           ┌──────────┐
+│ Cliente │           │ AuthController│           │ AuthService │           │ Database │
+└────┬────┘           └───────┬──────┘           └──────┬──────┘           └────┬─────┘
+     │                        │                          │                       │
+     │ POST /auth/signin      │                          │                       │
+     │ {email, password}      │                          │                       │
+     ├───────────────────────>│                          │                       │
+     │                        │                          │                       │
+     │                        │ signIn(email, password)  │                       │
+     │                        ├─────────────────────────>│                       │
+     │                        │                          │                       │
+     │                        │                          │ Buscar usuario        │
+     │                        │                          ├──────────────────────>│
+     │                        │                          │                       │
+     │                        │                          │<──────────────────────┤
+     │                        │                          │ Usuario encontrado    │
+     │                        │                          │                       │
+     │                        │                          │ Comparar password     │
+     │                        │                          │ bcrypt.compare()      │
+     │                        │                          │                       │
+     │                        │                          │ ✓ Password válido     │
+     │                        │                          │                       │
+     │                        │                          │ Generar sessionToken  │
+     │                        │                          │ (64 chars aleatorios) │
+     │                        │                          │                       │
+     │                        │                          │ Crear sesión          │
+     │                        │                          │ expires = now + 30d   │
+     │                        │                          ├──────────────────────>│
+     │                        │                          │                       │
+     │                        │                          │<──────────────────────┤
+     │                        │                          │ Sesión creada         │
+     │                        │                          │                       │
+     │                        │<─────────────────────────┤                       │
+     │                        │ {user, sessionToken}     │                       │
+     │                        │                          │                       │
+     │<───────────────────────┤                          │                       │
+     │ 200 OK                 │                          │                       │
+     │ {                      │                          │                       │
+     │   user: {...},         │                          │                       │
+     │   session: {           │                          │                       │
+     │     sessionToken: "abc"│                          │                       │
+     │   }                    │                          │                       │
+     │ }                      │                          │                       │
+     │                        │                          │                       │
+     │ 💾 Guardar token       │                          │                       │
+     │ localStorage.setItem() │                          │                       │
+     │                        │                          │                       │
+```
+
+### 3️⃣ Flujo de Acceso a Recurso Protegido
+
+```
+┌─────────┐     ┌──────────────┐     ┌───────────┐     ┌─────────────┐     ┌──────────┐
+│ Cliente │     │TasksController│     │ AuthGuard │     │ AuthService │     │ Database │
+└────┬────┘     └───────┬──────┘     └─────┬─────┘     └──────┬──────┘     └────┬─────┘
+     │                  │                   │                  │                  │
+     │ GET /tasks       │                   │                  │                  │
+     │ Authorization:   │                   │                  │                  │
+     │ Bearer <token>   │                   │                  │                  │
+     ├─────────────────>│                   │                  │                  │
+     │                  │                   │                  │                  │
+     │                  │ canActivate()     │                  │                  │
+     │                  ├──────────────────>│                  │                  │
+     │                  │                   │                  │                  │
+     │                  │                   │ Extraer token    │                  │
+     │                  │                   │ del header       │                  │
+     │                  │                   │                  │                  │
+     │                  │                   │ getUserBySession │                  │
+     │                  │                   ├─────────────────>│                  │
+     │                  │                   │                  │                  │
+     │                  │                   │                  │ Buscar sesión    │
+     │                  │                   │                  ├─────────────────>│
+     │                  │                   │                  │                  │
+     │                  │                   │                  │<─────────────────┤
+     │                  │                   │                  │ Sesión encontrada│
+     │                  │                   │                  │                  │
+     │                  │                   │                  │ Verificar expires│
+     │                  │                   │                  │ expires > now?   │
+     │                  │                   │                  │ ✓ Válida         │
+     │                  │                   │                  │                  │
+     │                  │                   │<─────────────────┤                  │
+     │                  │                   │ {user, session}  │                  │
+     │                  │                   │                  │                  │
+     │                  │<──────────────────┤                  │                  │
+     │                  │ true              │                  │                  │
+     │                  │ request.user = {} │                  │                  │
+     │                  │                   │                  │                  │
+     │                  │ findAll(@CurrentUser() user)         │                  │
+     │                  │                                      │                  │
+     │                  │ tasksService.findByUserId(user.id)   │                  │
+     │                  │                                      │                  │
+     │                  │                                      │ SELECT * FROM    │
+     │                  │                                      │ tasks WHERE      │
+     │                  │                                      │ userId = user.id │
+     │                  │                                      ├─────────────────>│
+     │                  │                                      │                  │
+     │                  │                                      │<─────────────────┤
+     │                  │                                      │ Tareas del user  │
+     │                  │                                      │                  │
+     │<─────────────────┤                                      │                  │
+     │ 200 OK           │                                      │                  │
+     │ [{id, title...}] │                                      │                  │
+     │                  │                                      │                  │
+```
+
+### 4️⃣ Flujo de Acceso Denegado (Sin Token o Token Inválido)
+
+```
+┌─────────┐     ┌──────────────┐     ┌───────────┐     ┌─────────────┐
+│ Cliente │     │TasksController│     │ AuthGuard │     │ AuthService │
+└────┬────┘     └───────┬──────┘     └─────┬─────┘     └──────┬──────┘
+     │                  │                   │                  │
+     │ GET /tasks       │                   │                  │
+     │ (sin token)      │                   │                  │
+     ├─────────────────>│                   │                  │
+     │                  │                   │                  │
+     │                  │ canActivate()     │                  │
+     │                  ├──────────────────>│                  │
+     │                  │                   │                  │
+     │                  │                   │ ❌ No hay token  │
+     │                  │                   │                  │
+     │                  │<──────────────────┤                  │
+     │                  │ UnauthorizedException                │
+     │                  │                   │                  │
+     │<─────────────────┤                   │                  │
+     │ 401 Unauthorized │                   │                  │
+     │ {               │                   │                  │
+     │   statusCode: 401│                   │                  │
+     │   message: "Token│                   │                  │
+     │   requerido"     │                   │                  │
+     │ }               │                   │                  │
+     │                  │                   │                  │
+
+─── O si el token es inválido ───
+
+     │ GET /tasks       │                   │                  │
+     │ Bearer xyz123    │                   │                  │
+     ├─────────────────>│                   │                  │
+     │                  │                   │                  │
+     │                  │ canActivate()     │                  │
+     │                  ├──────────────────>│                  │
+     │                  │                   │                  │
+     │                  │                   │ getUserBySession │
+     │                  │                   ├─────────────────>│
+     │                  │                   │                  │
+     │                  │                   │ ❌ Sesión no     │
+     │                  │                   │    encontrada    │
+     │                  │                   │                  │
+     │                  │<──────────────────┤                  │
+     │                  │ UnauthorizedException                │
+     │                  │                   │                  │
+     │<─────────────────┤                   │                  │
+     │ 401 Unauthorized │                   │                  │
+     │ "Sesión inválida"│                   │                  │
+```
+
+---
+
+## 🔐 Cómo Funciona la Autenticación
+
+### Componentes Principales
+
+1. **AuthService** (`auth.service.ts`)
+   - Maneja toda la lógica de autenticación
+   - Hash de contraseñas con bcrypt
+   - Creación y validación de sesiones
+   - Generación de tokens únicos
+
+2. **AuthGuard** (`guards/auth.guard.ts`)
+   - Intercepta requests antes de llegar al controlador
+   - Verifica la presencia del token
+   - Valida la sesión
+   - Agrega el usuario al request
+
+3. **@CurrentUser()** Decorador
+   - Extrae el usuario del request
+   - Disponible en controladores protegidos
+   - Type-safe con TypeScript
+
+4. **Sesiones en Base de Datos**
+   - Tabla `Session` con token único
+   - Relacionada con `User`
+   - Expiración automática después de 30 días
+
+### Flujo de Datos
+
+```
+1. Usuario registra → Password hasheado → Guardado en DB
+
+2. Usuario hace login → Valida password → Crea sesión → Retorna token
+
+3. Cliente guarda token → localStorage/cookie
+
+4. Request a ruta protegida → Header: Authorization: Bearer <token>
+
+5. AuthGuard intercepta → Verifica token → Busca sesión en DB
+
+6. Si válida → Agrega user a request → Permite acceso
+
+7. Controlador usa @CurrentUser() → Obtiene usuario autenticado
+
+8. Servicio filtra por userId → Solo datos del usuario
+```
 
 ---
 
@@ -65,163 +292,240 @@ DELETE /tasks/:id        - Eliminar mi tarea
 
 ---
 
-## 🛡️ Cómo Funciona la Protección
+## 🛡️ Seguridad Implementada
 
-### 1. AuthGuard
-
-Todos los controladores de Users y Tasks tienen:
+### ✅ Hash de Contraseñas
 
 ```typescript
-@Controller('tasks')
-@UseGuards(AuthGuard) // Protege TODAS las rutas
-export class TasksController {
-  // ...
+// En signUp
+const hashedPassword = await bcrypt.hash(password, 10);
+// 10 rondas de salt = muy seguro
+
+// En signIn
+const isValid = await bcrypt.compare(password, user.password);
+// Compara de forma segura
+```
+
+### ✅ Tokens Únicos
+
+```typescript
+// Generación de token
+private generateSessionToken(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let token = '';
+  for (let i = 0; i < 64; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
+}
+// 64 caracteres aleatorios = 62^64 combinaciones posibles
+```
+
+### ✅ Expiración Automática
+
+```typescript
+// Al crear sesión
+const expires = new Date();
+expires.setDate(expires.getDate() + 30); // 30 días
+
+// Al verificar
+if (session.expires < new Date()) {
+  throw new UnauthorizedException('Sesión expirada');
 }
 ```
 
-### 2. Filtrado por Usuario
-
-Todos los endpoints filtran automáticamente por el usuario autenticado:
+### ✅ Filtrado por Usuario
 
 ```typescript
-@Get()
-findAll(@CurrentUser() user: any) {
-  // Solo retorna las tareas del usuario autenticado
+// Todas las consultas filtran por userId
+async findAll(@CurrentUser() user: any) {
   return this.tasksService.findByUserId(user.id);
 }
-```
 
-### 3. Validación de Propiedad
-
-Al acceder a un recurso específico, se verifica que pertenezca al usuario:
-
-```typescript
-async findOne(id: string, userId: string) {
-  const task = await this.prisma.task.findFirst({
-    where: { 
-      id,
-      userId, // Solo si es del usuario
-    },
+// En el servicio
+async findByUserId(userId: string) {
+  return this.prisma.task.findMany({
+    where: { userId }, // Solo tareas del usuario
   });
-  // ...
 }
 ```
 
 ---
 
-## 💻 Uso desde el Frontend
+## 💻 Ejemplo de Implementación Frontend
+
+### React con Hooks
 
 ```javascript
-// 1. Login
-const response = await fetch('http://localhost:3000/auth/signin', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ 
-    email: 'user@test.com', 
-    password: '123456' 
-  })
-});
+// hooks/useAuth.js
+import { useState, useEffect } from 'react';
 
-const data = await response.json();
-const token = data.session.sessionToken;
+export function useAuth() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-// 2. Guardar token
-localStorage.setItem('token', token);
+  useEffect(() => {
+    checkAuth();
+  }, []);
 
-// 3. Todas las requests protegidas
+  const checkAuth = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3000/auth/me', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+      } else {
+        localStorage.removeItem('token');
+      }
+    } catch (error) {
+      console.error('Error verificando auth:', error);
+    }
+    
+    setLoading(false);
+  };
+
+  const login = async (email, password) => {
+    const response = await fetch('http://localhost:3000/auth/signin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem('token', data.session.sessionToken);
+      setUser(data.user);
+      return { success: true };
+    }
+    
+    return { success: false, error: 'Credenciales inválidas' };
+  };
+
+  const logout = async () => {
+    const token = localStorage.getItem('token');
+    await fetch('http://localhost:3000/auth/signout', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    localStorage.removeItem('token');
+    setUser(null);
+  };
+
+  return { user, loading, login, logout, checkAuth };
+}
+
+// Usar en componente
+function App() {
+  const { user, loading, login, logout } = useAuth();
+
+  if (loading) return <div>Cargando...</div>;
+
+  return user ? (
+    <Dashboard user={user} onLogout={logout} />
+  ) : (
+    <LoginForm onLogin={login} />
+  );
+}
+```
+
+### API Helper
+
+```javascript
+// utils/api.js
+const API_URL = 'http://localhost:3000';
+
 const getToken = () => localStorage.getItem('token');
 
-// Ver mis tareas
-fetch('http://localhost:3000/tasks', {
-  headers: { 'Authorization': `Bearer ${getToken()}` }
-});
+export const api = {
+  // Helper para requests autenticados
+  async fetch(endpoint, options = {}) {
+    const token = getToken();
+    
+    const config = {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+        ...options.headers,
+      },
+    };
 
-// Crear tarea
-fetch('http://localhost:3000/tasks', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${getToken()}`,
-    'Content-Type': 'application/json'
+    const response = await fetch(`${API_URL}${endpoint}`, config);
+    
+    if (response.status === 401) {
+      // Token inválido, limpiar y redirigir
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+      throw new Error('No autorizado');
+    }
+
+    return response;
   },
-  body: JSON.stringify({ title: 'Mi tarea' })
-});
 
-// Ver mi perfil
-fetch('http://localhost:3000/users/me', {
-  headers: { 'Authorization': `Bearer ${getToken()}` }
-});
+  // Tareas
+  async getTasks() {
+    const response = await this.fetch('/tasks');
+    return response.json();
+  },
+
+  async createTask(task) {
+    const response = await this.fetch('/tasks', {
+      method: 'POST',
+      body: JSON.stringify(task),
+    });
+    return response.json();
+  },
+
+  async updateTask(id, updates) {
+    const response = await this.fetch(`/tasks/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+    return response.json();
+  },
+
+  async deleteTask(id) {
+    await this.fetch(`/tasks/${id}`, { method: 'DELETE' });
+  },
+};
 ```
 
 ---
 
-## 🗂️ Estructura del Código
+## 🔧 Estructura del Código
 
 ```
 src/
 ├── auth/                          # Sistema de autenticación
-│   ├── auth.config.ts            # Configuración
-│   ├── auth.service.ts           # Lógica de auth
-│   ├── auth.controller.ts        # Endpoints públicos
-│   ├── auth.module.ts            # Módulo
+│   ├── auth.config.ts            # ⚙️ Configuración
+│   ├── auth.service.ts           # 🔐 Lógica de autenticación
+│   ├── auth.controller.ts        # 🌐 Endpoints públicos
+│   ├── auth.module.ts            # 📦 Módulo
 │   ├── guards/
-│   │   └── auth.guard.ts         # 🔒 Protege rutas
+│   │   └── auth.guard.ts         # 🔒 Protector de rutas
 │   └── decorators/
-│       └── current-user.decorator.ts  # Obtiene usuario
+│       └── current-user.decorator.ts  # 👤 Decorador de usuario
 │
 ├── users/                         # Gestión de usuarios
-│   ├── users.controller.ts       # 🔒 Protegido
-│   └── users.service.ts
+│   ├── users.controller.ts       # 🔒 PROTEGIDO
+│   ├── users.service.ts
+│   └── users.module.ts           # ✅ Importa AuthModule
 │
 └── tasks/                         # Gestión de tareas
-    ├── tasks.controller.ts        # 🔒 Protegido
-    └── tasks.service.ts
+    ├── tasks.controller.ts        # 🔒 PROTEGIDO
+    ├── tasks.service.ts
+    └── tasks.module.ts           # ✅ Importa AuthModule
 ```
-
----
-
-## 📚 Documentación
-
-### Archivos Principales
-
-1. **README.md** - Inicio rápido y referencia
-2. **docs/AUTHENTICATION.md** - Guía completa de autenticación
-3. **docs/QUICK-START.md** - Inicio en 3 pasos
-4. **test-auth.http** - Tests con REST Client
-
-### Documentación Eliminada
-
-Se eliminaron archivos redundantes:
-- ❌ API-ENDPOINTS.md (redundante)
-- ❌ PRISMA-SETUP.md (no esencial)
-- ❌ DOCKER-SETUP.md (no esencial)
-- ❌ PROJECT-STRUCTURE.md (no esencial)
-
-Se mantiene solo lo **esencial de autenticación**.
-
----
-
-## 🔧 Cambios Realizados
-
-### Controllers
-
-**Users Controller:**
-- ✅ Aplicado `@UseGuards(AuthGuard)`
-- ✅ Rutas simplificadas a `/users/me`
-- ✅ Solo acceso al propio perfil
-- ✅ Usa `@CurrentUser()` en todas las rutas
-
-**Tasks Controller:**
-- ✅ Aplicado `@UseGuards(AuthGuard)`
-- ✅ Todas las rutas filtran por usuario autenticado
-- ✅ Usa `@CurrentUser()` para obtener el usuario
-- ✅ Validación de propiedad en cada operación
-
-### Services
-
-**Tasks Service:**
-- ✅ Métodos actualizados para recibir `userId`
-- ✅ Validación de propiedad en `findOne`, `update`, `remove`
-- ✅ Solo retorna/modifica recursos del usuario
 
 ---
 
@@ -234,51 +538,16 @@ Se mantiene solo lo **esencial de autenticación**.
 
 2. **Propiedad de Recursos**
    - Intentar acceder a tarea de otro usuario → 404 Not Found
-   - Intentar modificar tarea de otro usuario → 404 Not Found
    - Solo se puede crear/ver/modificar propios recursos
 
 3. **Datos Sensibles**
-   - Contraseñas hasheadas
+   - Contraseñas hasheadas con bcrypt
    - Contraseñas nunca en responses
    - Sesiones validadas en cada request
 
 ---
 
-## 🎯 Resultado Final
-
-### ✅ Lo que Tienes
-
-1. **Sistema de autenticación completo**
-   - Registro, login, logout
-   - Sesiones persistentes
-   - Tokens seguros
-
-2. **Todas las rutas protegidas**
-   - Solo usuarios autenticados acceden
-   - Cada usuario ve solo sus datos
-   - Validación automática
-
-3. **Código limpio y comentado**
-   - Fácil de entender
-   - Fácil de extender
-   - Siguiendo best practices
-
-4. **Documentación enfocada**
-   - Solo lo esencial
-   - Enfoque en autenticación
-   - Sin redundancia
-
-### 🚀 Listo Para
-
-- ✅ Desarrollo inmediato
-- ✅ Testing con clientes reales
-- ✅ Integración con frontend
-- ✅ Extensión con más features
-- ✅ Deploy a producción (con ajustes de seguridad)
-
----
-
-## 🔍 Para Probar
+## 🚀 Para Probar
 
 ```bash
 # 1. Iniciar todo
@@ -308,5 +577,4 @@ curl http://localhost:3000/tasks \
 
 **¡Sistema completamente protegido y funcional!** 🎉
 
-Lee **[docs/AUTHENTICATION.md](docs/AUTHENTICATION.md)** para entender todo en detalle.
-
+Lee **[AUTHENTICATION.md](./AUTHENTICATION.md)** para más detalles.
