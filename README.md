@@ -25,7 +25,7 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository con Prisma ORM y PostgreSQL.
 
-> 🚀 **¿Primera vez aquí?** Lee la [Guía de Inicio Rápido](./QUICK-START.md) para comenzar en 5 minutos.
+> 🚀 **¿Primera vez aquí?** Lee la [Guía de Inicio Rápido](./docs/QUICK-START.md) para comenzar en 5 minutos.
 
 ## 🗄️ Stack Tecnológico
 
